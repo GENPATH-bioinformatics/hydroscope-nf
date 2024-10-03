@@ -1,10 +1,10 @@
 process CENTRIFUGE {
 
     input:
-    path fasta // change me 
+    path fasta
 
     outout:
-    path OUTDIR // change me 
+    path OUTDIR 
 
     script: 
     """
@@ -19,7 +19,7 @@ process CENTRIFUGE {
     if [ $? -eq ]; then 
         echo -e "\\tStep 4 successfully completed..."
     esle 
-        echo -e "\\tBuilding the centrifuge dataase from nt database NOT siccessful..."
+        echo -e "\\tBuilding the centrifuge database from nt database NOT successful..."
     fi
     """
 }

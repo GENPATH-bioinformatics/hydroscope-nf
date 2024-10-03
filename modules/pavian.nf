@@ -3,7 +3,7 @@ process PAVIAN {
     path "read.csv"
 
     output: 
-    tuple path "write.table", path "write.xlsx" 
+    tuple path ("write.table"), path ("write.xlsx")
 
     script: 
     """
