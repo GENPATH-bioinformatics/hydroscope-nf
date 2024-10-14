@@ -1,7 +1,7 @@
-process CENTRIFUGE {
+process BUILD_DB {
 
     input:
-    path fasta
+    tuple val(name) path(fasta)
 
     outout:
     path OUTDIR 

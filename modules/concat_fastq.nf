@@ -1,6 +1,6 @@
 process CONCATENATE {
     input: 
-    tuple val(name), path (fastq) 
+    tuple val(name), path (reads) 
 
     output:
     tuple val(name), path ("*_R{1,2}.merged.fastq.gz")

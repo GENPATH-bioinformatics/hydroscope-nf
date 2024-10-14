@@ -2,7 +2,7 @@
 
 process KRONA {
     input: 
-    path "*.kraken2_reports.txt"
+    tuple val(sample) path(reports)
 
     output: 
     path "*.krona.html"
@@ -11,13 +11,11 @@ process KRONA {
     '''
     for taxaFile in results/Taxonomy/kraken2/*/*.kraken2_report.txt
     do
-        fileName=$(dirname $taxaFile)
-        src_dir=${fileName##*/}
-        echo -e "\nCreating krona.html file from Kraken2.kreport for $src_dir..."
-        cat ${taxaFile} | cut -f 1,3 > ./${src_dir}.krona
+        echo -e "\nCreating krona.html file from Kraken2.kreport "
+        cat *.kraken2_report.txt | cut -f 1,3 > ./*.krona
         perl ${KRONA}/scripts/ImportTaxonomy.pl -tax ${KRONAdb} \
-        -o ./${src_dir}.krona.html ./${src_dir}.krona
-        echo -e "Creating krona.html file for ${src_dir} successfully done...\n"
+        -o ./*.krona.html ./*.krona
+        echo -e "Creating krona.html file successfully done...\n"
     done
     '''
 }
