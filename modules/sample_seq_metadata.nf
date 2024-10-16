@@ -1,4 +1,4 @@
-process SAMPLESEQ {
+process SAMPLESEQMETADATA {
     input:
     file read.xlsx
 
