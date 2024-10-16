@@ -9,34 +9,57 @@
 #   - All runs : raw read counts vs trimmed read counts
 #   - Filtered runs :  raw read counts vs trimmed read counts
 
+# Install and load optparse package
+if (!requireNamespace("optparse", quietly = TRUE)) {
+  install.packages("optparse")
+}
+library(optparse)
+
+# Define command line options
+option_list <- list(
+  make_option(c("-d", "--directory"), type = "character", default = "/home/gkibet/bioinformatics/github/metagenomics/data/visualization_WWP2/",
+              help = "working directory [default= %default]", metavar = "character"),
+  make_option(c("-l", "--lib"), type = "character", default = "/home/gkibet/R/x86_64-pc-linux-gnu-library/4.3",
+              help = "library path [default= %default]", metavar = "character"),
+  make_option(c("-m", "--metadata"), type = "character", default = "./metadata/20240429_Wastewater_Metadata_true.csv",
+              help = "metadata file path [default= %default]", metavar = "character"),
+  make_option(c("-s", "--shortdate"), type = "character", default = "20240429",
+              help = "short date [default= %default]", metavar = "character")
+)
+
+# Parse command line options
+opt <- parse_args(OptionParser(option_list = option_list))
+
+# Use parsed options
+setwd(opt$directory)
+lib <- opt$lib
+metadata_file <- opt$metadata
+shortDate <- opt$shortdate
+
 #Installing packages
-setwd("/home/gkibet/bioinformatics/github/metagenomics/data/visualization_WWP2/")
-lib="/home/gkibet/R/x86_64-pc-linux-gnu-library/4.3"
 source("./scripts/functions.R")
 
 requiredCRANPackages= c("dplyr", "ggplot2", "igraph", "readr", "openxlsx","tidytext",
-                    "stringr", "xml2", "tidyverse", "magrittr", "webr",
-                    "ggVennDiagram","devtools","svglite","janitor") #"ggvenn",
-#  CRAN packages will be installed if they are not yet installed.
+                        "stringr", "xml2", "tidyverse", "magrittr", "webr",
+                        "ggVennDiagram","devtools","svglite","janitor")
+
+# CRAN packages will be installed if they are not yet installed.
 installNloadCRANpackages(requiredPackages = requiredCRANPackages, lib = lib)
 
-# devtools::install_github("yanlinlin82/ggvenn@try-solve-count", force = TRUE)
-# detach("package:ggvenn", unload = TRUE)
-# library(ggvenn)
-
-getwd() #Get working directory
-
 #Loading data and wrangling 
-#Loading metadata
-dataDate="20240429"
+dataDate <- shortDate
 sampleMetadata <- read.xlsx(paste0("./metadata/",dataDate,"_Wastewater_Metadata_true.xlsx",sep=""), "sample_metadata", colNames = T, rowNames = F) %>%
   mutate(weekOfYear = strftime(as.Date(COLLECTION_DATE, format = "%d/%m/%Y"), format = "%V")) %>% 
   mutate(Year = strftime(as.Date(COLLECTION_DATE, format = "%d/%m/%Y"), format = "%y")) %>% 
   select(SAMPLE_NUMBER,weekOfYear,Year) %>% distinct()
+
 siteMetadata <- read.xlsx(paste0("./metadata/",dataDate,"_Wastewater_Metadata_true.xlsx",sep=""), "SampleSiteMetadata", colNames = T, rowNames = F) %>%
   right_join(.,sampleMetadata)
+
 seqMetadata <- read.xlsx(paste0("./metadata/",dataDate,"_Wastewater_Metadata_true.xlsx",sep=""), "sequence_data", colNames = T, rowNames = F)
+
 readQCMetadata <- read.csv(paste0("./plotdata/metrics/",dataDate,"_fastpQC_SummaryStatistics.csv",sep=""), header = T, sep = "\t")
+
 readCounts <- readQCMetadata %>% select(sampleID,raw.total_reads, trimmed.total_reads) %>% 
   mutate(dropped.reads = raw.total_reads - trimmed.total_reads)
 
@@ -45,22 +68,21 @@ readMetadata <- left_join(seqMetadata,readCounts)
 metadata <- right_join(siteMetadata,readMetadata, by = join_by(SAMPLE_NUMBER == sampleID)) %>%
   rename_all(., .funs = tolower) %>% rename(Name=name, sample_Number=sample_number, EstateOfOrigin=origin_estate,
                                             weekOfYear=weekofyear,Seqrun=seqrun,CountyOfOrigin=diagnosis_county)
+
 #Finding duplicated sample Names
 metadata %>% group_by(Name) %>% 
   filter(., Name %in% c(subset(.,duplicated(Name))$Name)) %>%
   arrange(Name) -> duplicateMetadata
-#View(duplicateMetadata)
-#colnames(metadata)
 
 # Cleaning up metadata
-# - drop run8 & run9 - abundancies are errortic
-# - Remove duplicates retaining samples with highest reads
-drop_rows <- c("") #c("run08","run09") #c("run08","run09") #
-drop_names <- c("") # c("SPL032") 
-status = "all" #filtered|all
-drop_EstateOfOrigin <- c("") #c("EASTLEIGH","KARIOBANGI") # c("") 
+drop_rows <- c("") 
+drop_names <- c("") 
+status = "all" 
+drop_EstateOfOrigin <- c("") 
+
 cleanMetadata <- metadata %>% .[!(.$Seqrun %in% drop_rows),] %>% .[!(.$Name %in% drop_names),] %>% 
   arrange(desc(raw.total_reads)) %>% distinct(Name, .keep_all = T) 
+
 cleanMetadata00 <- cleanMetadata %>% .[!(.$EstateOfOrigin %in% drop_EstateOfOrigin),] %>% 
   group_by(weekOfYear) %>% mutate(SampleFreqPerWeek=n_distinct(Name)) %>% ungroup() %>%
   group_by(EstateOfOrigin) %>% mutate(SampleFreqPerSite=n_distinct(Name)) %>% ungroup() %>%
@@ -68,10 +90,9 @@ cleanMetadata00 <- cleanMetadata %>% .[!(.$EstateOfOrigin %in% drop_EstateOfOrig
   mutate(year_Week= paste(year,weekOfYear, sep = "_"), .after = year) %>%
   group_by(year_Week) %>% mutate(weekNo = sprintf("week%02d",cur_group_id()), .after = year_Week) %>% ungroup()
 
-shortDate <- gsub("-","",base::Sys.Date())
-shortDate="20240429"
 write.table(metadata, file = paste("./metadata/",shortDate,"_all_cleanSampleMetadata.csv", sep = ""),
             quote = F, row.names = FALSE, col.names= TRUE, sep = ",")
+
 write.table(cleanMetadata00, file = paste("./metadata/",shortDate,"_cleanSampleMetadata.csv", sep = ""),
             quote = F, row.names = FALSE, col.names= TRUE, sep = ",")
 
@@ -81,11 +102,12 @@ plotData <- cleanMetadata00 %>%
   pivot_longer(cols = ends_with("reads"), names_to = "readsCategory", values_to = "readsCount") %>%
   mutate_at("readsCategory", list(~str_replace(., "dropped.reads", "Trimmed"))) %>%
   mutate_at("readsCategory", list(~str_replace(., "trimmed.total_reads","Passed QC (=>20QScore)")))
+
 plotData00 <- plotData %>% pivot_wider(names_from = readsCategory, values_from = readsCount) %>%
   select(-starts_with("Sample"))
+
 write.table(plotData00, file = paste("./plotdata/metrics/",shortDate,"_fastpQC_SummaryStatistics_plotData.csv", sep = ""),
             quote = F, row.names = FALSE, col.names= TRUE, sep = ",")
-
 
 # Plot Retained Plus trimmed reads Counts - faceted by EstateOfOrigin
 ggplot(plotData, aes(y=readsCount, x=weekNo, fill = CountyOfOrigin, group = interaction(Name,readsCategory), 
@@ -100,8 +122,10 @@ ggplot(plotData, aes(y=readsCount, x=weekNo, fill = CountyOfOrigin, group = inte
   labs(fill = "CountyOfOrigin", x = "Sample ID", y = "Reads Count (Trimmed + dropped)") +
   scale_fill_viridis_d(option = "plasma") +
   facet_grid(. ~ EstateOfOrigin, scales = "free", space = "free")
+
 ggsave(paste("./plots/metrics/",shortDate,"_",status,"_trimmed-DroppedReadCount-EstateofOrigin.png", sep = ""),
        width = 110, height = 20, units = "cm")
+
 
 # Plot Retained Plus trimmed reads Counts - Stacked bar graph  - faceted by EstateOfOrigin
 ggplot(plotData, aes(y=readsCount, x=weekNo, fill = CountyOfOrigin, group = interaction(Name,readsCategory),
