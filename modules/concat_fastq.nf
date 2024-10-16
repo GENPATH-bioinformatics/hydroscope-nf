@@ -3,7 +3,7 @@ process CONCATENATE {
     tuple val(name), path (reads) 
 
     output:
-    tuple val(name), path ("*_R{1,2}.merged.fastq.gz")
+    tuple val(name), path ("**_R{1,2}.merged.fastq.gz")
 
     script: 
     """
@@ -18,6 +18,9 @@ process CONCATENATE {
 }
 
 workflow TEST {
-    // this:Channel.fromPath()
-    // or this: CONCATENATE(Channel.fromPath(0))
+    inputReads = Channel.fromFilePairs("/home/wastewater/ilri-kenya-wastewater-meta-genomic-pathogen-surveillance/hydroscope-nf/_data/minifastq/sample2_{L001,L002}*.fastq.gz")
+
+    groupedReads = inputReads.transpose().groupTuple() //.view()
+
+    CONCATENATE(groupedReads)
 }

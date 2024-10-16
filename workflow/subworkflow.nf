@@ -1,16 +1,20 @@
+include {concat_fastq}
+include {db_build}
+include {Krona}
+include {pavian}
 
 SAMPLESHEET_CHECK {
 
 }
 
 
-PRE_MAG {
+workflow PRE_MAG {
     CONCATENATE(Channel.fromPath())
     BUILD_DB(Channel.fromPath())
 
 }
 
-POST_MAG {
+workflow POST_MAG {
     KRONA(Channel.fromPath())
     PAVIAN(Channel.fromPath())
 
