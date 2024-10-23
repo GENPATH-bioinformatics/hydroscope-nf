@@ -7,9 +7,7 @@ process CONCATENATE {
 
     script:
     """
-
-    cat *L00*.fastq.gz >> ${name}.merged.fastq.gz
-
+    cat ${reads} >> ${name}.merged.fastq.gz
     """
 
 }
