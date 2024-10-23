@@ -3,15 +3,12 @@ process CONCATENATE {
     tuple val(name), path (reads)
 
     output:
-    tuple val(name), path ("**_R{1,2}.merged.fastq.gz")
+    tuple val(name), path ("*.merged.fastq.gz")
 
     script:
     """
 
-    cat *L00*_R1_001.fastq.gz >> ${name}_R1.merged.fastq.gz
-
-    cat *L00*_R2_001.fastq.gz >> ${name}_R2.merged.fastq.gz
-
+    cat *L00*.fastq.gz >> ${name}.merged.fastq.gz
 
     """
 

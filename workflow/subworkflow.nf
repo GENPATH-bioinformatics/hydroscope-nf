@@ -4,7 +4,7 @@ include { CONCATENATE } from "../modules/concat_fastq.nf"
 workflow CONCATENATE_WF {
 
 	main:
-	    ch_input = Channel.fromFilePairs(params.reads).transpose().groupTuple()
+	    ch_input = Channel.fromPath(params.samplesheet).splitCsv(skip : 1).map {it -> [it.take(1).first(), it.drop(1)] }
 
 	    CONCATENATE (ch_input)
 
