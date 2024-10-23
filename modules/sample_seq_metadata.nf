@@ -3,18 +3,20 @@ process SAMPLE_SEQ_METADATA {
     path metadata_csv
 
     output:
-    path write.table 
+    path sample_metadata
 
     script:
     """
-    02.sampleSeqMetadata.R \
-	 --directory /home/gkibet/bioinformatics/github/metagenomics/data/visualization_WWP2/ \
-	 --lib /home/gkibet/R/x86_64-pc-linux-gnu-library/4.3 \
-	 --metadata $metadata_csv \
-	 --shortdate 20240429
-    """
+     02.sampleSeqMetadata.R \
+	--directory ${metadata_csv} \
+    --lib ${metadata_csv} \
+    --metadata ${metadata_csv} \
+    --shortdate 20241016 \
+    read.xlsx write.xlsx
+    """  
 }
 
 workflow TEST {
-
+metadata = Channel.of("/home/wastewater/ilri-kenya-wastewater-meta-genomic-pathogen-surveillance/hydroscope-nf/_data/fastqs/metadata")
+SAMPLE_SEQ_METADATA(metadata)
 }
