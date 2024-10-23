@@ -1,10 +1,12 @@
 include { CONCATENATE } from "../modules/concat_fastq.nf"
 
+
 workflow CONCATENATE_WF {
 
-    ch_input = Channel.fromFilePairs(params.reads).transpose().groupTuple()
+	main:
+	    ch_input = Channel.fromFilePairs(params.reads).transpose().groupTuple()
 
-    CONCATENATE_WF (ch_input)
+	    CONCATENATE (ch_input)
 
 
 }
