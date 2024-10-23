@@ -1,13 +1,16 @@
-include {concat_fastq}
-include {db_build}
-include {Krona}
-include {pavian}
+include { CONCATENATE } from "../modules/concat_fastq.nf"
 
-SAMPLESHEET_CHECK {
+workflow CONCATENATE_WF {
+
+    ch_input = Channel.fromFilePairs(params.reads).transpose().groupTuple()
+
+    CONCATENATE_WF (ch_input)
+
 
 }
 
 
+/*
 workflow PRE_MAG {
     CONCATENATE(Channel.fromPath())
     BUILD_DB(Channel.fromPath())
@@ -20,3 +23,5 @@ workflow POST_MAG {
 
 }
 
+
+*/

@@ -8,12 +8,12 @@ process SAMPLE_SEQ_METADATA {
     script:
     """
      02.sampleSeqMetadata.R \
-	--directory ${metadata_csv} \
+  --directory ${metadata_csv} \
     --lib ${metadata_csv} \
     --metadata ${metadata_csv} \
     --shortdate 20241016 \
     read.xlsx write.xlsx
-    """  
+    """
 }
 
 workflow TEST {

@@ -46,11 +46,11 @@ requiredCRANPackages= c("dplyr", "ggplot2", "igraph", "readr", "openxlsx","tidyt
 # CRAN packages will be installed if they are not yet installed.
 installNloadCRANpackages(requiredPackages = requiredCRANPackages, lib = lib)
 
-#Loading data and wrangling 
+#Loading data and wrangling
 dataDate <- shortDate
 sampleMetadata <- read.xlsx(paste0("./metadata/",dataDate,"_Wastewater_Metadata_true.xlsx",sep=""), "sample_metadata", colNames = T, rowNames = F) %>%
-  mutate(weekOfYear = strftime(as.Date(COLLECTION_DATE, format = "%d/%m/%Y"), format = "%V")) %>% 
-  mutate(Year = strftime(as.Date(COLLECTION_DATE, format = "%d/%m/%Y"), format = "%y")) %>% 
+  mutate(weekOfYear = strftime(as.Date(COLLECTION_DATE, format = "%d/%m/%Y"), format = "%V")) %>%
+  mutate(Year = strftime(as.Date(COLLECTION_DATE, format = "%d/%m/%Y"), format = "%y")) %>%
   select(SAMPLE_NUMBER,weekOfYear,Year) %>% distinct()
 
 siteMetadata <- read.xlsx(paste0("./metadata/",dataDate,"_Wastewater_Metadata_true.xlsx",sep=""), "SampleSiteMetadata", colNames = T, rowNames = F) %>%
@@ -60,7 +60,7 @@ seqMetadata <- read.xlsx(paste0("./metadata/",dataDate,"_Wastewater_Metadata_tru
 
 readQCMetadata <- read.csv(paste0("./plotdata/metrics/",dataDate,"_fastpQC_SummaryStatistics.csv",sep=""), header = T, sep = "\t")
 
-readCounts <- readQCMetadata %>% select(sampleID,raw.total_reads, trimmed.total_reads) %>% 
+readCounts <- readQCMetadata %>% select(sampleID,raw.total_reads, trimmed.total_reads) %>%
   mutate(dropped.reads = raw.total_reads - trimmed.total_reads)
 
 # Merging metadata
@@ -70,20 +70,20 @@ metadata <- right_join(siteMetadata,readMetadata, by = join_by(SAMPLE_NUMBER == 
                                             weekOfYear=weekofyear,Seqrun=seqrun,CountyOfOrigin=diagnosis_county)
 
 #Finding duplicated sample Names
-metadata %>% group_by(Name) %>% 
+metadata %>% group_by(Name) %>%
   filter(., Name %in% c(subset(.,duplicated(Name))$Name)) %>%
   arrange(Name) -> duplicateMetadata
 
 # Cleaning up metadata
-drop_rows <- c("") 
-drop_names <- c("") 
-status = "all" 
-drop_EstateOfOrigin <- c("") 
+drop_rows <- c("")
+drop_names <- c("")
+status = "all"
+drop_EstateOfOrigin <- c("")
 
-cleanMetadata <- metadata %>% .[!(.$Seqrun %in% drop_rows),] %>% .[!(.$Name %in% drop_names),] %>% 
-  arrange(desc(raw.total_reads)) %>% distinct(Name, .keep_all = T) 
+cleanMetadata <- metadata %>% .[!(.$Seqrun %in% drop_rows),] %>% .[!(.$Name %in% drop_names),] %>%
+  arrange(desc(raw.total_reads)) %>% distinct(Name, .keep_all = T)
 
-cleanMetadata00 <- cleanMetadata %>% .[!(.$EstateOfOrigin %in% drop_EstateOfOrigin),] %>% 
+cleanMetadata00 <- cleanMetadata %>% .[!(.$EstateOfOrigin %in% drop_EstateOfOrigin),] %>%
   group_by(weekOfYear) %>% mutate(SampleFreqPerWeek=n_distinct(Name)) %>% ungroup() %>%
   group_by(EstateOfOrigin) %>% mutate(SampleFreqPerSite=n_distinct(Name)) %>% ungroup() %>%
   group_by(EstateOfOrigin,weekOfYear) %>% mutate(SampleFreqPerSitePerWeek=n_distinct(Name)) %>% ungroup() %>%
@@ -110,10 +110,10 @@ write.table(plotData00, file = paste("./plotdata/metrics/",shortDate,"_fastpQC_S
             quote = F, row.names = FALSE, col.names= TRUE, sep = ",")
 
 # Plot Retained Plus trimmed reads Counts - faceted by EstateOfOrigin
-ggplot(plotData, aes(y=readsCount, x=weekNo, fill = CountyOfOrigin, group = interaction(Name,readsCategory), 
+ggplot(plotData, aes(y=readsCount, x=weekNo, fill = CountyOfOrigin, group = interaction(Name,readsCategory),
                      colour = readsCategory)) +
   geom_col(position = position_stack( vjust = 1, reverse = T)) +
-  theme(text = element_text(face = "bold", size = 20), 
+  theme(text = element_text(face = "bold", size = 20),
         axis.text.x = element_text(angle = 90, size = 15, vjust = 0.5),
         axis.text.y = element_text(face = "bold"),
         legend.position = "right") +
@@ -132,7 +132,7 @@ ggplot(plotData, aes(y=readsCount, x=weekNo, fill = CountyOfOrigin, group = inte
                      colour = readsCategory)) +
   geom_col(position = position_fill( vjust = 1, reverse = T)) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
-  theme(text = element_text(face = "bold", size = 20), 
+  theme(text = element_text(face = "bold", size = 20),
         axis.text.x = element_text(angle = 90, size = 15, vjust = 0.5),
         axis.text.y = element_text(face = "bold"),
         legend.position = "right") +
@@ -144,10 +144,10 @@ ggsave(paste("./plots/metrics/",shortDate,"_",status,"_trimmed-DroppedReadCount-
        width = 110, height = 20, units = "cm")
 
 # Plot Retained Plus trimmed reads Counts - faceted by Weeks
-ggplot(plotData, aes(y=readsCount, x=EstateOfOrigin, fill = CountyOfOrigin, group = interaction(Name,readsCategory), 
+ggplot(plotData, aes(y=readsCount, x=EstateOfOrigin, fill = CountyOfOrigin, group = interaction(Name,readsCategory),
                      colour = readsCategory)) +
   geom_col(position = position_stack( vjust = 1, reverse = T)) +
-  theme(text = element_text(face = "bold", size = 20), 
+  theme(text = element_text(face = "bold", size = 20),
         axis.text.x = element_text(angle = 90, size = 15, vjust = 0.5, hjust = 1),
         axis.text.y = element_text(face = "bold"),
         legend.position = "right") +
@@ -164,7 +164,7 @@ ggplot(plotData, aes(y=readsCount, x=EstateOfOrigin, fill = CountyOfOrigin, grou
                      colour = readsCategory)) +
   geom_col(position = position_fill( vjust = 1, reverse = T)) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
-  theme(text = element_text(face = "bold", size = 20), 
+  theme(text = element_text(face = "bold", size = 20),
         axis.text.x = element_text(angle = 90, size = 15, vjust = 0.5, hjust = 1),
         axis.text.y = element_text(face = "bold"),
         legend.position = "right") +
@@ -179,7 +179,7 @@ ggsave(paste("./plots/metrics/",shortDate,"_",status,"_trimmed-DroppedReadCount-
 ggplot(plotData, aes(y=readsCount, x=Name, fill = CountyOfOrigin, group = interaction(Name,readsCategory),
                      colour = readsCategory)) +
   geom_bar(stat="identity", position = position_stack( vjust = 1, reverse = T)) +
-  theme(text = element_text(face = "bold", size = 20), 
+  theme(text = element_text(face = "bold", size = 20),
         axis.text.x = element_text(angle = 90, size = 15, vjust = 0.5, hjust = 1),
         axis.text.y = element_text(face = "bold"),
         legend.position = "right") +
@@ -198,7 +198,7 @@ ggplot(plotData, aes(y=readsCount, x=Name, fill = CountyOfOrigin, group = intera
                      colour = readsCategory)) +
   geom_col(position = position_fill( vjust = 1, reverse = T)) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1))+
-  theme(text = element_text(face = "bold", size = 20), 
+  theme(text = element_text(face = "bold", size = 20),
         axis.text.x = element_text(angle = 90, size = 15, vjust = 0.5),
         axis.text.y = element_text(face = "bold"),
         legend.position = "right") +
@@ -213,7 +213,7 @@ ggsave(paste("./plots/metrics/",shortDate,"_",status,"_trimmed-DroppedReadCount-
 # Plot Raw read Counts
 ggplot(cleanMetadata00, aes(y=raw.total_reads, x=Name, fill = CountyOfOrigin)) +
   geom_col(position = "stack") +
-  theme(text = element_text(face = "bold", size = 20), 
+  theme(text = element_text(face = "bold", size = 20),
         axis.text.x = element_text(angle = 90, size = 15, vjust = 0.5),
         axis.text.y = element_text(face = "bold"),
         legend.position = "right") +
@@ -227,7 +227,7 @@ ggsave(paste("./plots/metrics/",shortDate,"_",status,"_rawReadCount-EstateofOrig
 
 ggplot(cleanMetadata00, aes(y=raw.total_reads, x=Name, fill = CountyOfOrigin)) +
   geom_col(position = "stack") +
-  theme(text = element_text(face = "bold", size = 20), 
+  theme(text = element_text(face = "bold", size = 20),
         axis.text.x = element_text(angle = 90, size = 15, vjust = 0.5),
         axis.text.y = element_text(face = "bold"),
         legend.position = "right") +
@@ -239,4 +239,3 @@ ggplot(cleanMetadata00, aes(y=raw.total_reads, x=Name, fill = CountyOfOrigin)) +
   geom_text(aes(label = EstateOfOrigin), vjust = 0.5, hjust = 0.0, size = 7, angle = 90)
 ggsave(paste("./plots/metrics/",shortDate,"_",status,"_rawReadCount-RunID.png", sep = ""),
        width = 110, height = 30, units = "cm")
-
