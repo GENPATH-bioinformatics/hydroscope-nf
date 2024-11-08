@@ -1,5 +1,7 @@
 include { CONCATENATE } from "../modules/concat_fastq.nf"
-
+include {BUILD_DB} from "../modules/db_build.nf"
+include {KRONA} from "../modules/krona.nf"
+include {PAVIAN} from "../modules/pavian.nf"
 
 workflow CONCATENATE_WF {
 
@@ -7,23 +9,32 @@ workflow CONCATENATE_WF {
 	    ch_input = Channel.fromPath(params.samplesheet).splitCsv(skip : 1).map {it -> [it.take(1).first(), it.drop(1)] }
 
 	    CONCATENATE (ch_input)
-
-
 }
 
-
-/*
-workflow PRE_MAG {
-    CONCATENATE(Channel.fromPath())
-    BUILD_DB(Channel.fromPath())
-
+workflow BD_BUILD_WF {
+    main: 
+        ch_input = Channel.fromPath(params.sequences)
+        BUILD_DB (ch_input)
 }
 
-workflow POST_MAG {
-    KRONA(Channel.fromPath())
-    PAVIAN(Channel.fromPath())
+workflow KRONA {
+    
+    main: 
+        ch_input = Channel.fromPath(params.kreport)
 
+        KRONA (ch_input)
 }
 
+worKflow PAVIAN {
+    
+    main:
+        ch_input = Channel.fromPath(params.kreport)
 
-*/
+        PAVIAN (ch_input)
+}
+
+workflow BD_BUILD_WF {
+    main: 
+        ch_input = Channel.fromPath(params.sequences)
+        BUILD_DB (ch_input)
+}

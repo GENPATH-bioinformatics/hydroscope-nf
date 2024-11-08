@@ -1,9 +1,9 @@
 process BUILD_DB {
 
     input:
-    tuple val(name) path(fasta)
+    path "fasta"
 
-    outout:
+    output:
     path OUTDIR 
 
     script: 
@@ -16,10 +16,13 @@ process BUILD_DB {
         --taxonomy-tree ${OUTDIR}/taxonomy/nodes.dmp
         --name-table ${OUTDIR}/taxonomy/names.dmp
         ${OUTDIR}/library/nt.fa${OUTDIR}/centrifugedb/nt
-    if [ $? -eq ]; then 
-        echo -e "\\tStep 4 successfully completed..."
-    esle 
-        echo -e "\\tBuilding the centrifuge database from nt database NOT successful..."
-    fi
+     && echo -e "\\tStep 4 successfully completed..." 
+    || echo -e "\\tBuilding the centrifuge database from nt database NOT successful..."
     """
+}
+
+workflow TEST {
+    params.sequences = "/home/wastewater/ilri-kenya-wastewater-meta-genomic-pathogen-surveillance/hydroscope-nf/_data/minifastq/*.fastq.gz"
+    ch_input = Channel.fromPath(params.sequences)
+    BUILD_DB(ch_input)
 }

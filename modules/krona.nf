@@ -2,7 +2,7 @@
 
 process KRONA {
     input: 
-    tuple val(sample) path(reports)
+    path "reports"
 
     output: 
     path "*.krona.html"
@@ -18,4 +18,11 @@ process KRONA {
         echo -e "Creating krona.html file successfully done...\n"
     done
     '''
+}
+
+workflow TEST {
+    params.kreports = "/home/wastewater/ilri-kenya-wastewater-meta-genomic-pathogen-surveillance/data/visualization_WWP2/kreports/*report.txt.gz"
+    ch_input = Channel.fromPath(params.kreports).view()
+
+    KRONA(ch_input)
 }
