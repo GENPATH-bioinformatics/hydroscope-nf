@@ -65,7 +65,7 @@ template:
   name: hydroscope-nf
   description: A utility pipeline for automation of various wastewater suveillance
     tasks
-  author: '@lisa-khanya, @abhi18av'
+  author: "@lisa-khanya, @abhi18av"
   version: 1.0.0dev
   force: true
   outdir: hydroscope-nf
