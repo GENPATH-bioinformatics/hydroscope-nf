@@ -4,33 +4,25 @@
 //               https://nf-co.re/join
 // TODO nf-core: A subworkflow SHOULD import at least two modules
 
-include { SAMTOOLS_SORT      } from '../../../modules/nf-core/samtools/sort/main'
-include { SAMTOOLS_INDEX     } from '../../../modules/nf-core/samtools/index/main'
+include { KRAKENTOOLS_KREPORT2KRONA } from '../../../modules/nf-core/krakentools/kreport2krona/main'
 
 workflow POST_MAG {
 
-    take:
-    // TODO nf-core: edit input (take) channels
-    ch_bam // channel: [ val(meta), [ bam ] ]
-
     main:
-
     ch_versions = Channel.empty()
 
-    // TODO nf-core: substitute modules here for the modules of your subworkflow
+    if (params.krona ) {
+        // Concatenate Mapped_R1 with Unmapped_R1 and Mapped_R2 with Unmapped_R2
+        KRAKENTOOLS_KREPORT2KRONA(params.kreport)
 
-    SAMTOOLS_SORT ( ch_bam )
-    ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions.first())
+        // Gather versions of all tools used
+        ch_versions = ch_versions.mix(KRAKENTOOLS_KREPORT2KRONA.out.versions)
+    }
 
-    SAMTOOLS_INDEX ( SAMTOOLS_SORT.out.bam )
-    ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions.first())
+
 
     emit:
     // TODO nf-core: edit emitted channels
-    bam      = SAMTOOLS_SORT.out.bam           // channel: [ val(meta), [ bam ] ]
-    bai      = SAMTOOLS_INDEX.out.bai          // channel: [ val(meta), [ bai ] ]
-    csi      = SAMTOOLS_INDEX.out.csi          // channel: [ val(meta), [ csi ] ]
-
     versions = ch_versions                     // channel: [ versions.yml ]
 }
 

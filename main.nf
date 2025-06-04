@@ -13,9 +13,15 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { HYDROSCOPE-NF  } from './workflows/hydroscope-nf'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_hydroscope-nf_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_hydroscope-nf_pipeline'
+include { paramsSummaryMap       } from 'plugin/nf-schema'
+include { softwareVersionsToYAML } from './subworkflows/nf-core/utils_nfcore_pipeline'
+include { methodsDescriptionText } from './subworkflows/local/utils_nfcore_hydroscope-nf_pipeline'
+include { PRE_MAG                } from './subworkflows/local/pre_mag/main'
+include { POST_MAG               } from './subworkflows/local/post_mag/main'
+
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
@@ -25,19 +31,43 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_hydr
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
-workflow GENPATHBIOINFORMATICS_HYDROSCOPE-NF {
-
-    take:
-    samplesheet // channel: samplesheet read in from --input
+workflow HYDROSCOPE_NF {
 
     main:
 
+    ch_versions = Channel.empty()
+
     //
-    // WORKFLOW: Run pipeline
+    // SUBWORKFLOW: Pre-MAG processing
     //
-    HYDROSCOPE-NF (
-        samplesheet
-    )
+    if (params.pre_mag) {
+        PRE_MAG ()
+        ch_versions = ch_versions.mix(PRE_MAG.out.versions)
+    }
+
+   //
+    // SUBWORKFLOW: Post-MAG processing
+    //
+    if (params.post_mag) {
+        POST_MAG ()
+        ch_versions = ch_versions.mix(POST_MAG.out.versions)
+    }
+
+    //
+    // Collate and save software versions
+    //
+    softwareVersionsToYAML(ch_versions)
+        .collectFile(
+            storeDir: "${params.outdir}/pipeline_info",
+            name:  'hydroscope-nf_software_'  + 'versions.yml',
+            sort: true,
+            newLine: true
+        ).set { ch_versions }
+
+
+    emit:
+    versions     = ch_versions            // channel: [ path(versions.yml) ]
+
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
